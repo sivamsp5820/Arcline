@@ -1,0 +1,116 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-x64-release",
+      "displayName": "Windows x64 Release (Ninja)",
+      "description": "Optimized release build on Windows x64 with MSVC and Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "ARCLINE_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-x64-debug",
+      "displayName": "Windows x64 Debug (Ninja)",
+      "description": "Debug build with symbols and debug assertions",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "ARCLINE_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "macos-universal-release",
+      "displayName": "macOS Universal Release (Ninja)",
+      "description": "Universal Binary (Apple Silicon + Intel x86_64) on macOS",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-macos",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+        "ARCLINE_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-debian-release",
+      "displayName": "Debian / Ubuntu Linux Release (Ninja)",
+      "description": "Optimized release build for Debian/Ubuntu distributions",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debian",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "ARCLINE_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-arch-release",
+      "displayName": "Arch Linux Release (Ninja)",
+      "description": "Optimized release build for Arch Linux rolling distributions",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-arch",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "ARCLINE_BUILD_TESTS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release"
+    },
+    {
+      "name": "windows-x64-debug",
+      "configurePreset": "windows-x64-debug"
+    },
+    {
+      "name": "macos-universal-release",
+      "configurePreset": "macos-universal-release"
+    },
+    {
+      "name": "linux-debian-release",
+      "configurePreset": "linux-debian-release"
+    },
+    {
+      "name": "linux-arch-release",
+      "configurePreset": "linux-arch-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-tests",
+      "configurePreset": "windows-x64-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "linux-tests",
+      "configurePreset": "linux-debian-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "macos-tests",
+      "configurePreset": "macos-universal-release",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

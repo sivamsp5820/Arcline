@@ -1,0 +1,31 @@
+# Maintainer: ARCLINE Audio <maintainers@arcline.audio>
+pkgname=arcline
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Professional, creative-first desktop Digital Audio Workstation - Shape Your Sound."
+arch=('x86_64')
+url="https://arcline.audio"
+license=('Proprietary')
+depends=('alsa-lib' 'freetype2' 'libx11' 'libxinerama' 'libxrandr' 'libxcursor' 'mesa')
+makedepends=('cmake' 'ninja' 'gcc')
+source=()
+sha256sums=()
+
+build() {
+    cmake -B build -S "$startdir/../.." \
+        -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DARCLINE_BUILD_TESTS=ON
+    cmake --build build --config Release
+}
+
+check() {
+    ctest --test-dir build --output-on-failure
+}
+
+package() {
+    install -Dm755 build/Arcline_artefacts/Release/ARCLINE "$pkgdir/usr/bin/arcline"
+    install -Dm644 "$startdir/../../packaging/linux-portable/arcline.desktop" "$pkgdir/usr/share/applications/arcline.desktop"
+    install -Dm644 "$startdir/../../LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

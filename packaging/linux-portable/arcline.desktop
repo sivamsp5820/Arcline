@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=ARCLINE
+GenericName=Digital Audio Workstation
+Comment=Shape Your Sound. Professional native desktop DAW
+Exec=arcline %F
+Icon=arcline
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;AudioVideoEditing;Midi;Sequencer;
+MimeType=application/x-arcline;
+Keywords=audio;daw;music;midi;synthesizer;logic;
+StartupNotify=true
