@@ -156,9 +156,19 @@ std::string FileSystem::toPosixPath(const std::string& path) {
 
 std::string FileSystem::makeRelative(const std::string& basePath, const std::string& targetPath) {
     if (basePath.empty() || targetPath.empty()) return toPosixPath(targetPath);
+
+    auto base = fs::u8path(basePath).lexically_normal();
+    auto target = fs::u8path(targetPath).lexically_normal();
+
+    auto lexRel = target.lexically_relative(base);
+    if (!lexRel.empty() && lexRel.native() != fs::path(".")) {
+        std::string relStr = toPosixPath(lexRel.string());
+        if (!relStr.empty() && relStr.rfind("../..", 0) != 0) {
+            return relStr;
+        }
+    }
+
     std::error_code ec;
-    auto base = fs::u8path(basePath);
-    auto target = fs::u8path(targetPath);
     auto rel = fs::relative(target, base, ec);
     if (!ec && !rel.empty()) {
         return toPosixPath(rel.string());

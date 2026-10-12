@@ -153,7 +153,25 @@ ctest --test-dir build --output-on-failure
 
 ---
 
+## 🤝 Contributing & Branching Architecture
+
+ARCLINE follows an isolated Git branching model to enable parallel development by multiple engineers and AI coding agents without merge conflicts or architectural contamination:
+
+- **Stable Releases:** [`main`](file:///e:/SonaraDaw) (Protected — official releases only)
+- **Active Integration:** [`develop`](file:///e:/SonaraDaw) (Protected — reviewed feature PRs)
+- **Phase 1 Frozen Baseline:** `phase-1-frozen` / tag `v0.1.0-phase1` (Immutable reference)
+- **Feature Branches:** `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `build/*`
+
+### Getting Started as a Contributor
+1. **Read Guidelines:** Review [CONTRIBUTING.md](file:///e:/SonaraDaw/CONTRIBUTING.md) and [docs/BRANCHING_STRATEGY.md](file:///e:/SonaraDaw/docs/BRANCHING_STRATEGY.md).
+2. **Select an Available Task:** Check [docs/CONTRIBUTOR_TASKS.md](file:///e:/SonaraDaw/docs/CONTRIBUTOR_TASKS.md) to claim an unassigned task.
+3. **Respect Layer Boundaries:** UI components must never access audio threads directly. Review [docs/ARCHITECTURE.md](file:///e:/SonaraDaw/docs/ARCHITECTURE.md) and [docs/INPUT_COMMAND_BOUNDARY.md](file:///e:/SonaraDaw/docs/INPUT_COMMAND_BOUNDARY.md).
+4. **Submit Verified PRs:** Use [.github/pull_request_template.md](file:///e:/SonaraDaw/.github/pull_request_template.md) with test results and evidence.
+
+---
+
 ## 📄 License
 
 Proprietary — Copyright (c) 2026 ARCLINE Audio. All rights reserved.  
 *"Shape Your Sound."*
+

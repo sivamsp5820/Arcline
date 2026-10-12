@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ARCLINE Architectural Roadmap
+    url: docs/ROADMAP.md
+    about: Read our planned milestones and architecture guidelines before filing an issue.
+  - name: Contributor Task Catalog
+    url: docs/CONTRIBUTOR_TASKS.md
+    about: Find available tasks and work breakdown structure before claiming work.
