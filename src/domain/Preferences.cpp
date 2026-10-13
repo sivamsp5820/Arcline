@@ -30,6 +30,8 @@ void Preferences::resetToDefaults() noexcept {
     inspectorVisible_ = true;
     libraryVisible_ = false;
     lowerEditorTab_ = "mixer";
+    sampleRate_ = 48000.0;
+    bufferSize_ = 256;
 }
 
 bool Preferences::validate() const noexcept {

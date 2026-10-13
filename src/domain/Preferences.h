@@ -77,6 +77,13 @@ public:
     const std::string& getLowerEditorTab() const noexcept { return lowerEditorTab_; }
     void setLowerEditorTab(std::string tab) { lowerEditorTab_ = std::move(tab); }
 
+    // Phase 2: Audio Hardware Preferences
+    double getSampleRate() const noexcept { return sampleRate_; }
+    void setSampleRate(double rate) noexcept { if (rate > 0.0) sampleRate_ = rate; }
+
+    int getBufferSize() const noexcept { return bufferSize_; }
+    void setBufferSize(int size) noexcept { if (size > 0) bufferSize_ = size; }
+
     void resetToDefaults() noexcept;
     bool validate() const noexcept;
 
@@ -89,6 +96,9 @@ private:
     double uiScaleFactor_{1.0};
     bool autoSaveEnabled_{true};
     int autoSaveIntervalMinutes_{5};
+
+    double sampleRate_{48000.0};
+    int bufferSize_{256};
 
     int inspectorWidth_{kDefaultInspectorWidth};
     int libraryWidth_{kDefaultLibraryWidth};

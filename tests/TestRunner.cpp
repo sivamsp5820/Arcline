@@ -15,13 +15,21 @@ namespace sonora::tests {
     void runProjectFormatDurabilityTests();
 }
 
+namespace arcline::tests {
+    void runAudioEngineLifecycleTests();
+    void runAudioClockTests();
+    void runTestToneSignalTests();
+    void runMetronomeTests();
+    void runDeviceSettingsTests();
+}
+
 int main(int /*argc*/, char** /*argv*/) {
     std::cout << "TEST_RUNNER_START" << std::endl;
     juce::ScopedJuceInitialiser_GUI juceInitialiser;
     std::cout << "JUCE_INITIALISED" << std::endl;
 
     std::cout << "========================================\n";
-    std::cout << "   ARCLINE Phase 1 Automated Test Suite \n";
+    std::cout << "   ARCLINE Phase 2 Master Test Suite    \n";
     std::cout << "   \"Shape Your Sound.\"                  \n";
     std::cout << "========================================\n\n";
 
@@ -56,8 +64,24 @@ int main(int /*argc*/, char** /*argv*/) {
         std::cout << "[RUNNING] ProjectLifecycleTests..." << std::endl;
         sonora::tests::runProjectLifecycleTests();
 
+        // Phase 2 Audio Engine Test Suites
+        std::cout << "[RUNNING] AudioEngineLifecycleTests..." << std::endl;
+        arcline::tests::runAudioEngineLifecycleTests();
+
+        std::cout << "[RUNNING] AudioClockTests..." << std::endl;
+        arcline::tests::runAudioClockTests();
+
+        std::cout << "[RUNNING] TestToneSignalTests..." << std::endl;
+        arcline::tests::runTestToneSignalTests();
+
+        std::cout << "[RUNNING] MetronomeTests..." << std::endl;
+        arcline::tests::runMetronomeTests();
+
+        std::cout << "[RUNNING] DeviceSettingsTests..." << std::endl;
+        arcline::tests::runDeviceSettingsTests();
+
         std::cout << "\n========================================\n";
-        std::cout << "   SUCCESS: ALL 10 AUTOMATED SUITES PASSED! \n";
+        std::cout << "   SUCCESS: ALL 15 AUTOMATED SUITES PASSED! \n";
         std::cout << "========================================\n";
         return 0;
     } catch (const std::exception& e) {

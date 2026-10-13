@@ -1,5 +1,7 @@
 #include "ui/components/TransportBar.h"
 #include "ui/theme/SonoraTheme.h"
+#include "audio/engine/AudioEngine.h"
+#include "audio/transport/TransportController.h"
 #include <iomanip>
 #include <sstream>
 
@@ -21,13 +23,21 @@ TransportBar::TransportBar(app::AppContext& context)
     setupButton(returnToZeroButton_, "Go to Beginning [Enter]", [this] { context_.returnToZero(); });
     setupButton(rewindButton_, "Rewind 1 Bar", [this] {
         if (auto* p = context_.getActiveProject()) {
-            p->setPlayheadTick(p->getPlayheadTick() - domain::Project::kTicksPerBeat * 4);
+            int64_t target = std::max<int64_t>(0, p->getPlayheadTick() - domain::Project::kTicksPerBeat * 4);
+            if (auto tc = context_.getTransportController()) {
+                tc->locateToTick(target);
+            }
+            p->setPlayheadTick(target);
             context_.notifyTransportChanged();
         }
     });
     setupButton(forwardButton_, "Fast Forward 1 Bar", [this] {
         if (auto* p = context_.getActiveProject()) {
-            p->setPlayheadTick(p->getPlayheadTick() + domain::Project::kTicksPerBeat * 4);
+            int64_t target = p->getPlayheadTick() + domain::Project::kTicksPerBeat * 4;
+            if (auto tc = context_.getTransportController()) {
+                tc->locateToTick(target);
+            }
+            p->setPlayheadTick(target);
             context_.notifyTransportChanged();
         }
     });
@@ -38,6 +48,9 @@ TransportBar::TransportBar(app::AppContext& context)
     setupButton(metronomeButton_, "Metronome / Click", [this] {
         metronomeActive_ = !metronomeActive_;
         metronomeButton_.setToggleState(metronomeActive_, juce::dontSendNotification);
+        if (auto engine = context_.getAudioEngine()) {
+            engine->getMetronomeProcessor().setEnabled(metronomeActive_);
+        }
         repaint();
     });
 
@@ -62,25 +75,32 @@ void TransportBar::onTransportChanged() {
 
 void TransportBar::timerCallback() {
     auto* project = context_.getActiveProject();
-    if (!project || !project->isPlaying()) return;
+    if (!project) return;
 
-    // Advance playhead according to tempo and 30Hz frame time
-    // ticksPerSec = (bpm / 60.0) * kTicksPerBeat
-    double ticksPerSec = (project->getTempoBpm() / 60.0) * domain::Project::kTicksPerBeat;
-    int64_t ticksDelta = static_cast<int64_t>(ticksPerSec / 30.0);
-    if (ticksDelta <= 0) ticksDelta = 16;
-
-    int64_t current = project->getPlayheadTick();
-    int64_t next = current + ticksDelta;
-
-    if (project->isCycleActive() && project->getCycleEndTick() > project->getCycleStartTick()) {
-        if (next >= project->getCycleEndTick()) {
-            next = project->getCycleStartTick();
+    if (auto tc = context_.getTransportController()) {
+        if (project->isPlaying()) {
+            int64_t clockTick = tc->getCurrentTickPosition();
+            project->setPlayheadTick(clockTick);
+            context_.notifyTransportChanged();
         }
-    }
+    } else {
+        if (!project->isPlaying()) return;
+        double ticksPerSec = (project->getTempoBpm() / 60.0) * domain::Project::kTicksPerBeat;
+        int64_t ticksDelta = static_cast<int64_t>(ticksPerSec / 30.0);
+        if (ticksDelta <= 0) ticksDelta = 16;
 
-    project->setPlayheadTick(next);
-    context_.notifyTransportChanged();
+        int64_t current = project->getPlayheadTick();
+        int64_t next = current + ticksDelta;
+
+        if (project->isCycleActive() && project->getCycleEndTick() > project->getCycleStartTick()) {
+            if (next >= project->getCycleEndTick()) {
+                next = project->getCycleStartTick();
+            }
+        }
+
+        project->setPlayheadTick(next);
+        context_.notifyTransportChanged();
+    }
 }
 
 void TransportBar::updateDisplays() {

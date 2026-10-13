@@ -2,6 +2,9 @@
 #include "infrastructure/FileSystem.h"
 #include "infrastructure/ProjectRepository.h"
 #include "core/Logger.h"
+#include "audio/devices/AudioDeviceService.h"
+#include "audio/transport/TransportController.h"
+#include "audio/engine/AudioEngine.h"
 #include <algorithm>
 
 namespace sonora::app {
@@ -25,10 +28,28 @@ AppContext::AppContext() {
         lowerEditorTab_ = LowerEditorTab::None;
     }
 
+    // Phase 2: Initialize real-time audio subsystem
+    audioDeviceService_ = std::make_shared<arcline::audio::AudioDeviceService>();
+    transportController_ = std::make_shared<arcline::audio::TransportController>();
+    audioEngine_ = std::make_shared<arcline::audio::AudioEngine>(audioDeviceService_, transportController_);
+
+    double initialSampleRate = preferences_.getSampleRate() > 0.0 ? preferences_.getSampleRate() : 48000.0;
+    int initialBufferSize = preferences_.getBufferSize() > 0 ? preferences_.getBufferSize() : 256;
+
+    audioDeviceService_->initialize(0, 2, initialSampleRate, initialBufferSize);
+    audioEngine_->initialize(initialSampleRate, initialBufferSize);
+    audioEngine_->start();
+
     registerDefaultCommands();
 }
 
 AppContext::~AppContext() {
+    if (audioEngine_) {
+        audioEngine_->shutdown();
+    }
+    if (audioDeviceService_) {
+        audioDeviceService_->closeDevice();
+    }
     savePreferences();
     saveRecentProjects();
 }
@@ -245,19 +266,27 @@ void AppContext::toggleLowerEditorTab(LowerEditorTab tab) noexcept {
 
 void AppContext::togglePlayPause() {
     if (activeProject_) {
-        bool playing = !activeProject_->isPlaying();
-        activeProject_->setPlaying(playing);
+        if (transportController_) {
+            if (transportController_->isPlaying()) {
+                transportController_->stop();
+            } else {
+                transportController_->play();
+            }
+            activeProject_->setPlaying(transportController_->isPlaying());
+        } else {
+            bool playing = !activeProject_->isPlaying();
+            activeProject_->setPlaying(playing);
+        }
         notifyTransportChanged();
     }
 }
 
 void AppContext::stopTransport() {
     if (activeProject_) {
-        if (activeProject_->isPlaying()) {
-            activeProject_->setPlaying(false);
-        } else {
-            activeProject_->setPlayheadTick(0);
+        if (transportController_) {
+            transportController_->stop();
         }
+        activeProject_->setPlaying(false);
         activeProject_->setRecording(false);
         notifyTransportChanged();
     }
@@ -265,7 +294,12 @@ void AppContext::stopTransport() {
 
 void AppContext::toggleCycle() {
     if (activeProject_) {
-        activeProject_->setCycleActive(!activeProject_->isCycleActive());
+        bool cycle = !activeProject_->isCycleActive();
+        activeProject_->setCycleActive(cycle);
+        if (transportController_) {
+            transportController_->setLooping(cycle);
+            transportController_->setLoopRange(activeProject_->getCycleStartTick(), activeProject_->getCycleEndTick());
+        }
         notifyTransportChanged();
     }
 }
@@ -274,13 +308,21 @@ void AppContext::toggleRecord() {
     if (activeProject_) {
         bool rec = !activeProject_->isRecording();
         activeProject_->setRecording(rec);
-        if (rec) activeProject_->setPlaying(true);
+        if (rec) {
+            activeProject_->setPlaying(true);
+            if (transportController_) transportController_->record();
+        } else {
+            if (transportController_) transportController_->play();
+        }
         notifyTransportChanged();
     }
 }
 
 void AppContext::returnToZero() {
     if (activeProject_) {
+        if (transportController_) {
+            transportController_->returnToStart();
+        }
         activeProject_->setPlayheadTick(0);
         notifyTransportChanged();
     }

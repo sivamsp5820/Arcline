@@ -76,6 +76,9 @@ set(ARCLINE_CORE_SOURCES
     src/infrastructure/FileSystem.cpp
     src/infrastructure/ProjectRepository.cpp
     src/infrastructure/PreferencesRepository.cpp
+    src/audio/engine/AudioEngine.cpp
+    src/audio/devices/AudioDeviceService.cpp
+    src/audio/transport/TransportController.cpp
 )
 
 set(ARCLINE_UI_SOURCES
@@ -130,6 +133,9 @@ target_link_libraries(Arcline PRIVATE
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_gui_extra
+    juce::juce_audio_basics
+    juce::juce_audio_devices
+    juce::juce_audio_formats
 )
 
 # Legacy alias target for backward compatibility
@@ -158,6 +164,11 @@ if(ARCLINE_BUILD_TESTS)
         tests/unit/LayoutVerificationTests.cpp
         tests/unit/ProjectFormatDurabilityTests.cpp
         tests/integration/ProjectLifecycleTests.cpp
+        tests/unit/AudioEngineLifecycleTests.cpp
+        tests/unit/AudioClockTests.cpp
+        tests/unit/TestToneSignalTests.cpp
+        tests/unit/MetronomeTests.cpp
+        tests/unit/DeviceSettingsTests.cpp
         ${ARCLINE_CORE_SOURCES}
     )
 
@@ -180,6 +191,9 @@ if(ARCLINE_BUILD_TESTS)
     target_link_libraries(ArclineTests PRIVATE
         juce::juce_core
         juce::juce_events
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
     )
 
     add_custom_target(SonoraTests DEPENDS ArclineTests)

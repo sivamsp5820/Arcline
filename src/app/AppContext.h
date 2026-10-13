@@ -13,6 +13,10 @@
 #include <vector>
 #include <functional>
 
+#include "audio/devices/AudioDeviceService.h"
+#include "audio/transport/TransportController.h"
+#include "audio/engine/AudioEngine.h"
+
 namespace sonora::app {
 
 enum class ToolType {
@@ -112,6 +116,11 @@ public:
     std::function<void()> onRequestPreferencesDialog;
     std::function<void()> onRequestCommandPalette;
 
+    // Audio Subsystem (Phase 2 Real-Time Engine)
+    std::shared_ptr<arcline::audio::AudioDeviceService> getAudioDeviceService() const noexcept { return audioDeviceService_; }
+    std::shared_ptr<arcline::audio::TransportController> getTransportController() const noexcept { return transportController_; }
+    std::shared_ptr<arcline::audio::AudioEngine> getAudioEngine() const noexcept { return audioEngine_; }
+
 private:
     void registerDefaultCommands();
 
@@ -124,6 +133,10 @@ private:
     domain::UndoHistory undoHistory_;
     std::vector<ProjectListener*> projectListeners_;
 
+    std::shared_ptr<arcline::audio::AudioDeviceService> audioDeviceService_;
+    std::shared_ptr<arcline::audio::TransportController> transportController_;
+    std::shared_ptr<arcline::audio::AudioEngine> audioEngine_;
+
     ToolType activeTool_{ToolType::Pointer};
     bool isInspectorVisible_{true};
     bool isLibraryVisible_{false};
@@ -131,3 +144,4 @@ private:
 };
 
 } // namespace sonora::app
+

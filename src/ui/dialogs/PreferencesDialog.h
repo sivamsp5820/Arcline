@@ -30,13 +30,26 @@ private:
     juce::Label scaleLabel_;
     juce::ComboBox scaleCombo_;
 
+    // Phase 2: Audio Hardware Controls
+    juce::Label audioSectionLabel_;
+    juce::Label deviceTypeLabel_;
+    juce::ComboBox deviceTypeCombo_;
+    juce::Label outputDeviceLabel_;
+    juce::ComboBox outputDeviceCombo_;
+    juce::Label sampleRateLabel_;
+    juce::ComboBox sampleRateCombo_;
+    juce::Label bufferSizeLabel_;
+    juce::ComboBox bufferSizeCombo_;
+    juce::TextButton testToneBtn_{"Test Sound (440 Hz Sine Tone)"};
+    juce::Label engineStatusLabel_;
+
     juce::ToggleButton confirmOnExitToggle_{"Ask for confirmation before quitting application"};
     juce::ToggleButton autoSaveToggle_{"Enable automatic background project snapshot save"};
 
     juce::TextButton clearRecentsBtn_{"Clear Recent Projects History"};
     juce::TextButton resetDefaultsBtn_{"Reset to Defaults"};
 
-    juce::TextButton saveBtn_{"Save Preferences"};
+    juce::TextButton saveBtn_{"Apply & Save"};
     juce::TextButton cancelBtn_{"Close"};
 
     juce::Label infoLabel_;
