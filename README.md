@@ -18,7 +18,14 @@
 8. [Cross-Platform Verification Matrix](#-cross-platform-verification-matrix)
 9. [Keyboard Shortcuts Cheat Sheet](#-keyboard-shortcuts-cheat-sheet)
 10. [Architectural Invariants & Layer Boundaries](#-architectural-invariants--layer-boundaries)
-11. [Contributing & Pull Request Workflow](#-contributing--pull-request-workflow)
+11. [Complete Contributor Guide](#-complete-contributor-guide)
+    - [11.1 Quick-Start: Clone, Submodules & First Build](#111-quick-start-clone-submodules--first-build)
+    - [11.2 Finding & Claiming Tasks](#112-finding--claiming-tasks)
+    - [11.3 Branching Strategy & Topic Branch Workflow](#113-branching-strategy--topic-branch-workflow)
+    - [11.4 Architectural Invariants & Hard Real-Time Safety Rules](#114-architectural-invariants--hard-real-time-safety-rules)
+    - [11.5 Coding Standards & Commit Message Conventions](#115-coding-standards--commit-message-conventions)
+    - [11.6 Running Tests & Validation Checklist](#116-running-tests--validation-checklist)
+    - [11.7 Submitting a Pull Request](#117-submitting-a-pull-request)
 12. [License](#-license)
 
 ---
@@ -355,15 +362,237 @@ ARCLINE enforces strict decoupling between four distinct architectural layers:
 
 ---
 
-## 🤝 Contributing & Pull Request Workflow
+## 🤝 Complete Contributor Guide
 
-Please read [`CONTRIBUTING.md`](file:///e:/SonaraDaw/CONTRIBUTING.md) and [`docs/BRANCHING_STRATEGY.md`](file:///e:/SonaraDaw/docs/BRANCHING_STRATEGY.md) before submitting code:
+Whether you are a human audio engineer, a C++ systems programmer, or an autonomous AI coding agent, this guide outlines the end-to-end workflow for contributing to ARCLINE.
 
-1. **Find a Task:** Open [`docs/CONTRIBUTOR_TASKS.md`](file:///e:/SonaraDaw/docs/CONTRIBUTOR_TASKS.md) to choose an `AVAILABLE` task.
-2. **Claim the Task:** File an issue using [`.github/ISSUE_TEMPLATE/01_feature_task.md`](file:///e:/SonaraDaw/.github/ISSUE_TEMPLATE/01_feature_task.md).
-3. **Switch to Category Branch:** Work in the appropriate category branch (`ui`, `plugins`, `audio-engine`, etc.).
-4. **Run Verification:** Verify that `cmake --build build` and `.\build\bin\ArclineTests.exe` pass 100%.
-5. **Submit PR:** Use [`.github/pull_request_template.md`](file:///e:/SonaraDaw/.github/pull_request_template.md) targeting `develop`.
+### 11.1 Quick-Start: Clone, Submodules & First Build
+
+#### 1. Clone the Repository
+Clone the repository with recursive submodules to ensure JUCE 8 is fetched:
+```bash
+git clone https://github.com/sivamsp5820/Arcline.git
+cd Arcline
+git submodule update --init --recursive
+```
+
+#### 2. Native Compilation by Operating System
+
+* **Windows 10/11 (MSVC 2022 + Ninja):**
+  Open the *Visual Studio x64 Native Tools Command Prompt* and execute:
+  ```powershell
+  # Configure Release build with automated tests enabled
+  cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DARCLINE_BUILD_TESTS=ON
+
+  # Compile DAW executable and test runner
+  cmake --build build --config Release
+
+  # Run test suite
+  ctest --test-dir build --output-on-failure
+  ```
+  *(Or execute `.\build_native.cmd` directly from the project root).*
+
+* **macOS 12+ (Apple Silicon & Intel):**
+  Ensure Xcode and command line tools are installed:
+  ```bash
+  cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DARCLINE_BUILD_TESTS=ON
+  cmake --build build --config Release
+  ctest --test-dir build --output-on-failure
+  ```
+
+* **Ubuntu / Debian Linux:**
+  Install required audio development packages:
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y build-essential cmake ninja-build \
+      libasound2-dev libjack-jackd2-dev libfreetype-dev \
+      libfontconfig1-dev libx11-dev libxrandr-dev libxinerama-dev \
+      libxcursor-dev libgl1-mesa-dev
+  cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DARCLINE_BUILD_TESTS=ON
+  cmake --build build --config Release
+  ctest --test-dir build --output-on-failure
+  ```
+
+* **Arch Linux:**
+  ```bash
+  sudo pacman -S --needed base-devel cmake ninja alsa-lib jack2 freetype2 libx11 libxrandr libxinerama libxcursor
+  cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DARCLINE_BUILD_TESTS=ON
+  cmake --build build --config Release
+  ctest --test-dir build --output-on-failure
+  ```
+
+---
+
+### 11.2 Finding & Claiming Tasks
+
+To prevent overlapping efforts across contributors, all development is tracked via structured tasks in [`docs/CONTRIBUTOR_TASKS.md`](docs/CONTRIBUTOR_TASKS.md):
+
+1. **Browse Available Tasks:** Check [`docs/CONTRIBUTOR_TASKS.md`](docs/CONTRIBUTOR_TASKS.md) to locate tasks marked `[AVAILABLE]`.
+2. **Task ID Categorization:**
+   - `UI-*`: Desktop UI, Arrangement timeline, Piano roll, Inspector, Dark theme styling.
+   - `AUD-*`: Real-time audio engine, hardware device negotiation, buffer processing, transport clock.
+   - `MIX-*`: Summing engine, bus routing graph, faders, equal-power pan, ballistic metering.
+   - `MID-*`: Hardware MIDI discovery, MIDI file sequencing, virtual synth engines.
+   - `VST-*`: Out-of-process VST3 plugin hosting, scanner, parameter recall.
+   - `PRJ-*`: Project file schema, atomic persistence, undo/redo transactions.
+3. **Claim the Task:** File a GitHub issue using [`.github/ISSUE_TEMPLATE/01_feature_task.md`](.github/ISSUE_TEMPLATE/01_feature_task.md) titled:
+   `[CLAIM] <TASK-ID>: <Task Title>`
+   *(e.g., `[CLAIM] UI-ARR-002: Implement Scissors Tool for Audio Region Splitting`)*.
+
+---
+
+### 11.3 Branching Strategy & Topic Branch Workflow
+
+ARCLINE follows an isolated Git Flow model. **Never push directly to `main` or `develop`.**
+
+```
+[main]                     <- Production release tags only (v0.1.0, v0.2.0)
+  ▲
+[develop]                  <- Active integration branch (All PRs target here)
+  ▲
+  ├── feature/<task-name>  <- Your isolated topic branch
+  │
+[category branches]        <- ui, audio-engine, mixer, midi, plugins, project-core
+```
+
+#### Step-by-Step Branching Protocol:
+
+1. **Always base your branch on the latest `develop`:**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   ```
+
+2. **Create a descriptive topic branch:**
+   ```bash
+   # Feature branch
+   git checkout -b feature/ui-piano-roll-grid
+
+   # Bug fix branch
+   git checkout -b fix/wasapi-buffer-underrun
+
+   # Documentation branch
+   git checkout -b docs/mixer-architecture-guide
+   ```
+
+3. **Category Branches:**
+   If you are working on a long-term dedicated subsystem, you can also branch off or sync with the dedicated category branches:
+   - `ui` — UI screens and dark theme
+   - `audio-engine` — Real-time audio engine & drivers
+   - `mixer` — Summing and mixing graph
+   - `midi` — MIDI input and instrument engines
+   - `plugins` — VST3 hosting
+   - `project-core` — Serialization and domain state
+
+---
+
+### 11.4 Architectural Invariants & Hard Real-Time Safety Rules
+
+All code submitted to ARCLINE must respect strict architectural boundaries:
+
+#### 1. Hard Real-Time Audio Callback Rules (Absolute Invariants)
+Inside `audioDeviceIOCallbackWithContext` or any code executed on the real-time audio thread:
+* ❌ **NO dynamic memory allocations:** Never call `new`, `delete`, `malloc`, `free`, or resize `std::vector`/`std::string`. Preallocate all buffers in `prepareToPlay()`.
+* ❌ **NO thread blocking / locks:** Never acquire `std::mutex`, semaphores, or condition variables. Use lock-free atomics (`std::atomic` with relaxed or acquire/release semantics) or preallocated lock-free FIFOs.
+* ❌ **NO File or Network I/O:** Never read/write files or sockets on the audio thread.
+* ❌ **NO UI or synchronous logging:** Never call UI components or dispatch synchronous log messages. Use atomic counters or lightweight diagnostics buffers.
+
+#### 2. UI Layer Rules
+* UI components must never access audio threads or manipulate raw audio buffer pointers.
+* UI actions must dispatch through `AppContext` or `sonora::core::CommandRegistry`.
+* UI timers must not clock the audio transport; musical position is driven asynchronously by `TransportController`'s sample clock.
+
+#### 3. Domain & Persistence Rules
+* Every user-initiated change to `Project`, `Track`, or `Region` must be registered with `UndoHistory` to preserve undo/redo functionality.
+* Project saving must use the atomic safe-write protocol: write to a temporary file (`.tmp`) and atomically rename to avoid partial writes or corrupt project files.
+
+---
+
+### 11.5 Coding Standards & Commit Message Conventions
+
+#### C++20 Standards
+* Target standard: **ISO C++20** (`-std=c++20`).
+* Use RAII and smart pointers (`std::unique_ptr`, `std::shared_ptr`); avoid raw ownership pointers.
+* Follow modern standard library conventions (`std::span`, `std::string_view`, `<numbers>`, `<concepts>`).
+* Keep headers self-contained with `#pragma once`.
+
+#### Commit Message Format (Conventional Commits)
+All commit messages must follow the Conventional Commits specification:
+```text
+<type>(<scope>): <short description>
+```
+
+* **Types:**
+  - `feat`: A new feature or subsystem addition
+  - `fix`: A bug fix or regression repair
+  - `refactor`: Code change that neither fixes a bug nor adds a feature
+  - `test`: Adding or correcting tests
+  - `docs`: Documentation changes only
+  - `build`: Changes that affect the build system or dependencies (CMake, Ninja)
+  - `ci`: Changes to CI configuration or scripts
+
+* **Examples:**
+  ```text
+  feat(audio): implement continuous-phase sine tone generator
+  fix(prefs): serialize sampleRate and bufferSize in preferences repository
+  test(clock): add loop wrap boundary validation tests
+  docs(contribute): expand README contributor guide
+  ```
+
+---
+
+### 11.6 Running Tests & Validation Checklist
+
+Before opening a Pull Request, verify that your changes compile cleanly without warnings and pass all test suites:
+
+```powershell
+# 1. Compile project and test runner
+cmake --build build --config Release
+
+# 2. Run automated tests via CTest
+ctest --test-dir build --output-on-failure
+
+# 3. Or execute the native test runner directly:
+.\build\bin\ArclineTests.exe
+```
+
+All 15 automated suites must pass:
+* `ProjectTests`
+* `UndoHistoryTests`
+* `PreferencesTests`
+* `RecentProjectsTests`
+* `CommandRegistryTests`
+* `NavigationTests`
+* `LocalizationTests`
+* `LayoutVerificationTests`
+* `ProjectFormatDurabilityTests`
+* `ProjectLifecycleTests` (including Phase 1 + 2 integrated audio session)
+* `AudioEngineLifecycleTests`
+* `AudioClockTests`
+* `TestToneSignalTests`
+* `MetronomeTests`
+* `DeviceSettingsTests`
+
+---
+
+### 11.7 Submitting a Pull Request
+
+1. **Push your branch to GitHub:**
+   ```bash
+   git push -u origin feature/<task-name>
+   ```
+2. **Open a Pull Request:**
+   Navigate to [https://github.com/sivamsp5820/Arcline](https://github.com/sivamsp5820/Arcline) and open a Pull Request.
+   * **Base branch:** `develop` *(Never target `main` directly)*.
+   * **Compare branch:** `feature/<task-name>`.
+3. **Fill Out the PR Template:**
+   Use the preconfigured [`.github/pull_request_template.md`](.github/pull_request_template.md):
+   * Link the Task ID (e.g. `Resolves #42` or `Addresses UI-ARR-001`).
+   * Describe your architectural changes.
+   * Attach test verification logs showing 100% pass rate.
+   * Confirm compliance with the real-time audio safety checklist if modifying audio code.
+4. **Code Review & Merge:**
+   Once reviewed and verified, your branch will be merged into `develop`.
 
 ---
 
