@@ -47,8 +47,9 @@ void TransportController::returnToStart() {
 void TransportController::locateToSample(int64_t sampleIndex) {
     int64_t s = std::max<int64_t>(0, sampleIndex);
     pendingLocateSample_.store(s, std::memory_order_release);
-    // Direct clock update for immediate UI reflection if stopped
-    if (state_.load(std::memory_order_relaxed) == future_audio::TransportState::Stopped) {
+    // Direct clock update for immediate UI reflection if stopped or paused
+    auto st = state_.load(std::memory_order_relaxed);
+    if (st == future_audio::TransportState::Stopped || st == future_audio::TransportState::Paused) {
         clock_.locateToSample(s);
     }
 }

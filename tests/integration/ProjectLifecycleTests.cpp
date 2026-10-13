@@ -2,6 +2,8 @@
 #include "infrastructure/FileSystem.h"
 #include "infrastructure/ProjectRepository.h"
 #include "infrastructure/PreferencesRepository.h"
+#include "audio/engine/AudioEngine.h"
+#include "audio/transport/TransportController.h"
 #include "tests/TestAssert.h"
 #include <iostream>
 #include <filesystem>
@@ -93,6 +95,50 @@ void runProjectLifecycleTests() {
     SONORA_TEST_ASSERT(reloadedPrefs.getConfirmOnExit() == false);
     SONORA_TEST_ASSERT(reloadedPrefs.getUiScaleFactor() == 1.25);
     std::cout << "  -> Step 4 completed successfully." << std::endl;
+
+    // 5. Phase 1 & Phase 2 Integrated Audio Playback & Transport Clock Synchronization
+    std::cout << "  -> Step 5: Integrated Audio Transport & Playback Session..." << std::endl;
+    auto transport = std::make_shared<arcline::audio::TransportController>();
+    auto engine = std::make_shared<arcline::audio::AudioEngine>(nullptr, transport);
+
+    // Prepare engine offline at 48 kHz / 256 samples
+    bool engineInit = engine->initialize(48000.0, 256);
+    SONORA_TEST_ASSERT(engineInit);
+    SONORA_TEST_ASSERT(engine->start());
+
+    // Project loaded has tempo 128 BPM, 4/4
+    transport->setTempoBpm(loaded->getTempoBpm());
+    transport->setTimeSignature(loaded->getTimeSigNumerator(), loaded->getTimeSigDenominator());
+    transport->locateToTick(0);
+
+    // Start playback
+    transport->play();
+    SONORA_TEST_ASSERT(transport->isPlaying());
+
+    // Process 4 blocks of 256 samples (= 1024 samples)
+    std::vector<float> bufL(256, 0.0f);
+    std::vector<float> bufR(256, 0.0f);
+    float* channels[] = { bufL.data(), bufR.data() };
+    for (int b = 0; b < 4; ++b) {
+        engine->processOfflineBlock(channels, 2, 256);
+    }
+
+    // Verify clock advancement
+    SONORA_TEST_ASSERT(transport->getCurrentSamplePosition() == 1024);
+    SONORA_TEST_ASSERT(transport->getCurrentTickPosition() > 0);
+
+    // Stop playback
+    transport->stop();
+    SONORA_TEST_ASSERT(!transport->isPlaying());
+    SONORA_TEST_ASSERT(transport->getCurrentSamplePosition() == 1024);
+
+    // Return to start
+    transport->returnToStart();
+    SONORA_TEST_ASSERT(transport->getCurrentSamplePosition() == 0);
+    SONORA_TEST_ASSERT(transport->getCurrentTickPosition() == 0);
+
+    engine->shutdown();
+    std::cout << "  -> Step 5 completed successfully." << std::endl;
 
     // Clean up temporary test files
     std::error_code ec;

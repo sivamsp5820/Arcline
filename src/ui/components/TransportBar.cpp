@@ -80,8 +80,10 @@ void TransportBar::timerCallback() {
     if (auto tc = context_.getTransportController()) {
         if (project->isPlaying()) {
             int64_t clockTick = tc->getCurrentTickPosition();
-            project->setPlayheadTick(clockTick);
-            context_.notifyTransportChanged();
+            if (clockTick != project->getPlayheadTick()) {
+                project->setPlayheadTick(clockTick);
+                context_.notifyTransportChanged();
+            }
         }
     } else {
         if (!project->isPlaying()) return;
@@ -152,7 +154,7 @@ void TransportBar::paint(juce::Graphics& g) {
             int64_t bar = (totalTicks / ticksPerBar) + 1;
             int64_t remainderInBar = totalTicks % ticksPerBar;
             int64_t beat = (remainderInBar / ticksPerBeat) + 1;
-            int64_t remainderInBeat = remainderInBeat = remainderInBar % ticksPerBeat;
+            int64_t remainderInBeat = remainderInBar % ticksPerBeat;
             int64_t div = (remainderInBeat / (ticksPerBeat / 4)) + 1;
             int64_t tick = remainderInBeat % (ticksPerBeat / 4);
 
@@ -189,7 +191,7 @@ void TransportBar::paint(juce::Graphics& g) {
             auto tempoArea = lcdArea.removeFromLeft(tempoWidth);
 
             char bpmBuf[32];
-            snprintf(bpmBuf, sizeof(bpmBuf), "%.4f", project->getTempoBpm());
+            snprintf(bpmBuf, sizeof(bpmBuf), "%.2f", project->getTempoBpm());
 
             g.setFont(theme.getLcdFont(14.0f));
             g.setColour(c.lcdAccent);

@@ -90,6 +90,8 @@ void runPreferencesTests() {
     prefs.setLibraryWidth(330);
     prefs.setLowerEditorHeight(450);
     prefs.setUiScaleFactor(1.5);
+    prefs.setSampleRate(96000.0);
+    prefs.setBufferSize(128);
     ARCLINE_TEST_ASSERT(repo.savePreferences(prefs));
 
     // Reload from disk
@@ -100,6 +102,8 @@ void runPreferencesTests() {
     ARCLINE_TEST_ASSERT(loadedPrefs.getLibraryWidth() == 330);
     ARCLINE_TEST_ASSERT(loadedPrefs.getLowerEditorHeight() == 450);
     ARCLINE_TEST_ASSERT(loadedPrefs.getUiScaleFactor() == 1.5);
+    ARCLINE_TEST_ASSERT(loadedPrefs.getSampleRate() == 96000.0);
+    ARCLINE_TEST_ASSERT(loadedPrefs.getBufferSize() == 128);
 
     // 7. Defensive fallback on corrupted config file
     std::string prefsFile = infrastructure::FileSystem::combinePath(tempDir, "preferences.json");

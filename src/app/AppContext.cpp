@@ -128,6 +128,14 @@ bool AppContext::createNewProjectFromTemplate(const std::string& templateName, c
     recentProjects_.addOrPromote(name, projectFile);
     saveRecentProjects();
 
+    if (transportController_) {
+        transportController_->setTempoBpm(activeProject_->getTempoBpm());
+        transportController_->setTimeSignature(activeProject_->getTimeSigNumerator(), activeProject_->getTimeSigDenominator());
+        transportController_->locateToTick(activeProject_->getPlayheadTick());
+        transportController_->setLooping(activeProject_->isCycleActive());
+        transportController_->setLoopRange(activeProject_->getCycleStartTick(), activeProject_->getCycleEndTick());
+    }
+
     notifyProjectChanged();
     navigation_.navigateTo(domain::WorkspaceType::Arrangement);
     core::Logger::getInstance().info("Created new project: " + name + " from template: " + templateName);
@@ -150,6 +158,14 @@ bool AppContext::openProject(const std::string& filePath, std::string& outError)
     recentProjects_.addOrPromote(activeProject_->getName(), filePath);
     saveRecentProjects();
 
+    if (transportController_) {
+        transportController_->setTempoBpm(activeProject_->getTempoBpm());
+        transportController_->setTimeSignature(activeProject_->getTimeSigNumerator(), activeProject_->getTimeSigDenominator());
+        transportController_->locateToTick(activeProject_->getPlayheadTick());
+        transportController_->setLooping(activeProject_->isCycleActive());
+        transportController_->setLoopRange(activeProject_->getCycleStartTick(), activeProject_->getCycleEndTick());
+    }
+
     notifyProjectChanged();
     navigation_.navigateTo(domain::WorkspaceType::Arrangement);
     core::Logger::getInstance().info("Opened project: " + activeProject_->getName());
@@ -158,6 +174,10 @@ bool AppContext::openProject(const std::string& filePath, std::string& outError)
 
 void AppContext::closeProject() {
     if (activeProject_) {
+        if (transportController_) {
+            transportController_->stop();
+            transportController_->locateToTick(0);
+        }
         core::Logger::getInstance().info("Closed project: " + activeProject_->getName());
         activeProject_.reset();
         undoHistory_.clear();

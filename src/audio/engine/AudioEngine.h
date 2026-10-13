@@ -50,7 +50,6 @@ public:
     float getMasterPeakLeft() const noexcept { return masterPeakLeft_.load(std::memory_order_relaxed); }
     float getMasterPeakRight() const noexcept { return masterPeakRight_.load(std::memory_order_relaxed); }
 
-    // juce::AudioIODeviceCallback implementation
     void audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
                                           int numInputChannels,
                                           float* const* outputChannelData,

@@ -67,7 +67,7 @@ public:
 
             // Advance and wrap phase in [0, 2*pi)
             phase += phaseInc;
-            if (phase >= twoPi) {
+            while (phase >= twoPi) {
                 phase -= twoPi;
             }
         }

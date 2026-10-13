@@ -84,6 +84,14 @@ domain::Preferences PreferencesRepository::loadPreferences() {
         prefs.setLowerEditorTab(obj->getProperty("lowerEditorTab").toString().toStdString());
     }
 
+    // Audio Hardware Preferences
+    if (obj->hasProperty("sampleRate")) {
+        prefs.setSampleRate(static_cast<double>(obj->getProperty("sampleRate")));
+    }
+    if (obj->hasProperty("bufferSize")) {
+        prefs.setBufferSize(static_cast<int>(obj->getProperty("bufferSize")));
+    }
+
     return prefs;
 }
 
@@ -106,6 +114,10 @@ bool PreferencesRepository::savePreferences(const domain::Preferences& prefs) {
     obj->setProperty("inspectorVisible", prefs.isInspectorVisible());
     obj->setProperty("libraryVisible", prefs.isLibraryVisible());
     obj->setProperty("lowerEditorTab", juce::String(prefs.getLowerEditorTab()));
+
+    // Audio Hardware Preferences
+    obj->setProperty("sampleRate", prefs.getSampleRate());
+    obj->setProperty("bufferSize", prefs.getBufferSize());
 
     std::string json = juce::JSON::toString(juce::var(obj.get()), false).toStdString();
     return FileSystem::writeTextAtomic(prefsFilePath_, json);
